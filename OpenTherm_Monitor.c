@@ -1,15 +1,26 @@
 /*
 * Loopback test for the Manchester encoder/decoder state machine code
+* and/or the OpenTherm interface board
 
-Connect 'cross-over' cables from gpio_master_tx to gpio_slave_rx and
-from gpio_slave_tx to gpio_master_rx
+To test just the encoders and decoders, connect 'cross-over' cables from 
+gpio_master_tx to gpio_slave_rx and from gpio_slave_tx to gpio_master_rx.
 
 ! IMPORTANT NOTE
-To test the full path via the OpenTherm interface board set the
-`invert` arguments of the OT_rx_init() calls to false, because the
-interface board has inverted outputs
+To test the interface board, note that to simplify the circuit it uses
+inverse logic on the slave side:
 
-ToDo: check whether it's the inputs or the outputs that are inverted
+Pulling slave_tx low (0) sends high current (active, 1) which is
+detected as master_rx high (1).
+
+Pulling master_tx low (0) sends low voltage (idle, 0) which is
+detected as slave_rx high (1).
+
+Therefore we should set the logic inversion as follows:
+
+OT_tx_init (pio, &sm_master_tx, gpio_master_tx, false)  // normal logic
+OT_rx_init (pio, &sm_master_rx, gpio_master_rx, false)  // normal logic
+OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true)   // inverted logic
+OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  true)   // inverted logic
 */
 
 #include <stdio.h>
@@ -31,12 +42,12 @@ int main()
 
     uint sm_master_tx, sm_master_rx, sm_slave_tx, sm_slave_rx;
 
-    // load and start PIO state machines
+    // load and start PIO state machines (inverse logic for slave interface)
     if ( 
-        OT_tx_init (pio, &sm_master_tx, gpio_master_tx, true) &&
+        OT_tx_init (pio, &sm_master_tx, gpio_master_tx, false) &&
         OT_rx_init (pio, &sm_master_rx, gpio_master_rx, false) &&
-        OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true) &&
-        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  false)
+        OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true) &&    // inverse logic
+        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  true)       // inverse logic
     ) {
         puts ("State machines loaded and running");
     } else {
