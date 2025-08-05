@@ -1,10 +1,15 @@
 /*
-Loopback test for the Manchester encoder/decoder state machine code
+* Loopback test for the Manchester encoder/decoder state machine code
 
 Connect 'cross-over' cables from gpio_master_tx to gpio_slave_rx and
 from gpio_slave_tx to gpio_master_rx
 
-Alternatively you can test the full path via the OpenTherm interface board
+! IMPORTANT NOTE
+To test the full path via the OpenTherm interface board set the
+`invert` arguments of the OT_rx_init() calls to false, because the
+interface board has inverted outputs
+
+ToDo: check whether it's the inputs or the outputs that are inverted
 */
 
 #include <stdio.h>
@@ -29,9 +34,9 @@ int main()
     // load and start PIO state machines
     if ( 
         OT_tx_init (pio, &sm_master_tx, gpio_master_tx, true) &&
-        OT_rx_init (pio, &sm_master_rx, gpio_master_rx, true) &&
+        OT_rx_init (pio, &sm_master_rx, gpio_master_rx, false) &&
         OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true) &&
-        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  true)
+        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  false)
     ) {
         puts ("State machines loaded and running");
     } else {
@@ -69,7 +74,7 @@ int main()
             puts ("\tOK");
         } else {
             puts ("\tERROR");
-        }
+        }  
 
         sleep_ms(500);
 
@@ -90,5 +95,6 @@ int main()
         }
         
         sleep_ms(500);
+
     }
 }
