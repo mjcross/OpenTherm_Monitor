@@ -1,0 +1,74 @@
+/*
+RP2040 PIO state machine code to receive and decode an OpenTherm frame.
+Frames consist of 32 bits sent msb first, that are Manchester-encoded and
+sent with an extra leading and traling '1'.
+The decoder resynchronises to each mid-bit transition and rejects a frame 
+if the time between mid-bit transitions falls outside the 900-1100us window 
+permitted by the specification. Valid frames are pushed to the CPU RX FIFO 
+as 32-bit words.
+*/
+
+.program OT_rx
+                            // === timings assume 4us per tick ====
+write_0:
+    in null, 1              // 0 -> ISR
+
+.wrap_target
+next_bit:
+    set y, 31 [18]          // wait until just before next mid-bit transition
+bit_delay:
+    jmp y-- bit_delay [5]   // nb: on exit y is all 1's
+    
+    set x, 24               // set up 200us timeout (25*2 ticks)
+    jmp pin wait_fall [9]   // get level 42us before earliest permitted transition
+
+wait_rise:                  // line was low, wait for 0->1 transition
+    jmp pin write_0         // rising edge: detect a '0'
+    jmp x-- wait_rise
+    jmp reset_frame         // timeout: invalid frame
+
+wait_fall:                  // line was high, wait for 1->0 transition
+    jmp pin still_high
+    in y, 1                 // falling edge: detect a '1' (y is all 1's)
+    jmp next_bit
+still_high:
+    jmp x-- wait_fall
+                            // timeout: invalid frame
+
+PUBLIC entry:
+reset_frame:
+    mov ISR, null           // reset ISR and input shift counter
+    wait 1 pin 0
+    wait 0 pin 0            // sync to mid-bit transition of start bit
+    
+                            // wrap to next_bit
+.wrap
+
+
+% c-sdk {
+static inline void OT_rx_sm_init (PIO pio, uint sm, uint offset, uint gpio) {
+    // create and initialise a state machine configuration
+    pio_sm_config config = OT_rx_program_get_default_config (offset);
+
+    // configure the 'jmp' and 'in' pins
+    sm_config_set_jmp_pin (&config, gpio);
+    sm_config_set_in_pins (&config, gpio);      // used for 'wait'
+
+    // configure the clock divider
+    float div = clock_get_hz (clk_sys) * 4e-6;  // set divider for 4us per tick
+    sm_config_set_clkdiv (&config, div);
+
+    // configure ISR for shift left (MSB is sent first), autopush on full
+    sm_config_set_in_shift (&config, 
+        false,  // bool shift_right
+        true,   // bool autopush
+        32      // uint push_threshold
+    );
+
+    // apply the configuration to the state machine and initialise the program counter
+    pio_sm_init (pio, sm, offset + OT_rx_offset_entry, &config);
+
+    // enable the state machine
+    pio_sm_set_enabled (pio, sm, true);
+}
+%}
