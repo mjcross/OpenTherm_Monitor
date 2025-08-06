@@ -55,57 +55,32 @@ int main()
         while (true);
     }
 
+    OT_frame_t master_frame, slave_frame;
     puts("Entering main loop");
-    int loop_counter = 0;
-
-    // create a test frame
-    OT_frame_t tx_frame = {}, rx_frame = {};
-
     while (true) {
-        loop_counter += 1;
 
-        tx_frame.msg_type = READ_DATA;
-        tx_frame.data_id = STATUS_FLAGS;
-        tx_frame.data_value = loop_counter;
-        OT_frame_update_parity (&tx_frame);
-
-        putchar ('\n');
-
-        // check Master -> Slave
-        printf ("Master sent\t");
-        pio_sm_put_blocking (pio, sm_master_tx, tx_frame.raw);
-        display_frame (&tx_frame);
-        putchar ('\n');
-
-        printf ("Slave rcvd\t");
-        rx_frame.raw = pio_sm_get_blocking (pio, sm_slave_rx);
-        display_frame (&rx_frame);
-
-        if (tx_frame.raw == rx_frame.raw) {
-            puts ("\tOK");
-        } else {
-            puts ("\tERROR");
-        }  
-
-        sleep_ms(500);
-
-        // check Slave -> Master
-        printf ("Slave sent\t");
-        pio_sm_put_blocking (pio, sm_slave_tx, tx_frame.raw);
-        display_frame (&tx_frame);
-        putchar ('\n');
-
-        printf ("Master rcvd\t");
-        rx_frame.raw = pio_sm_get_blocking (pio, sm_master_rx);
-        display_frame (&rx_frame);
-
-        if (tx_frame.raw == rx_frame.raw) {
-            puts ("\tOK");
-        } else {
-            puts ("\tERROR");
+        // forward master frames to slave
+        if (!pio_sm_is_rx_fifo_empty (pio, sm_master_rx)) {
+            // receive frame from master
+            master_frame.raw = pio_sm_get (pio, sm_master_rx);
+            // forward frame to slave
+            pio_sm_put_blocking (pio, sm_slave_tx, master_frame.raw);
+            // display decoded frame
+            printf ("Master\t");
+            decode_frame (&master_frame);
+            putchar ('\n');
         }
-        
-        sleep_ms(500);
+
+        // forward slave frames to master
+        if (!pio_sm_is_rx_fifo_empty (pio, sm_slave_rx)) {
+            // receive frame from slave
+            slave_frame.raw = pio_sm_get (pio, sm_slave_rx);
+            // forward frame to master
+            pio_sm_put_blocking (pio, sm_master_tx, slave_frame.raw);
+            // display decoded frame
+            printf ("Slave:\t");
+            decode_frame (&slave_frame);
+        }
 
     }
 }
