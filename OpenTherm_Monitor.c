@@ -70,7 +70,7 @@ int main()
             // receive frame from master
             master_frame.raw = pio_sm_get (pio, sm_slave_rx);
             // forward frame to slave via our 'master' interface
-            pio_sm_put_blocking (pio, sm_master_tx, slave_frame.raw);
+            pio_sm_put_blocking (pio, sm_master_tx, master_frame.raw);
             // display decoded frame
             printf ("Master:\t");
             decode_frame (&master_frame);
@@ -82,7 +82,7 @@ int main()
             // receive frame from slave on our 'master' interface
             slave_frame.raw = pio_sm_get (pio, sm_master_rx);
             // forward frame to master via our 'slave' interface
-            pio_sm_put_blocking (pio, sm_slave_tx, master_frame.raw);
+            pio_sm_put_blocking (pio, sm_slave_tx, slave_frame.raw);
             // display decoded frame
             printf ("Slave:\t");
             decode_frame (&slave_frame);
