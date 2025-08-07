@@ -47,7 +47,7 @@ pico_set_program_version(OpenTherm_Monitor "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(OpenTherm_Monitor 1)
-pico_enable_stdio_usb(OpenTherm_Monitor 0)
+pico_enable_stdio_usb(OpenTherm_Monitor 1)
 
 # Add the standard library to the build
 target_link_libraries(OpenTherm_Monitor

@@ -40,6 +40,12 @@ int main()
 {
     stdio_init_all();
 
+    puts ("Starting in...");
+    for (int i=10; i>0; i--) {
+        printf ("%d\n", i);
+        sleep_ms (1000);
+    }
+
     uint sm_master_tx, sm_master_rx, sm_slave_tx, sm_slave_rx;
 
     // load and start PIO state machines (inverse logic for slave interface)
@@ -59,27 +65,28 @@ int main()
     puts("Entering main loop");
     while (true) {
 
-        // forward master frames to slave
-        if (!pio_sm_is_rx_fifo_empty (pio, sm_master_rx)) {
+        // listen to our 'slave' interface for frames from the master
+        if (!pio_sm_is_rx_fifo_empty (pio, sm_slave_rx)) {
             // receive frame from master
-            master_frame.raw = pio_sm_get (pio, sm_master_rx);
-            // forward frame to slave
-            pio_sm_put_blocking (pio, sm_slave_tx, master_frame.raw);
+            master_frame.raw = pio_sm_get (pio, sm_slave_rx);
+            // forward frame to slave via our 'master' interface
+            pio_sm_put_blocking (pio, sm_master_tx, slave_frame.raw);
             // display decoded frame
-            printf ("Master\t");
+            printf ("Master:\t");
             decode_frame (&master_frame);
             putchar ('\n');
         }
 
-        // forward slave frames to master
-        if (!pio_sm_is_rx_fifo_empty (pio, sm_slave_rx)) {
-            // receive frame from slave
-            slave_frame.raw = pio_sm_get (pio, sm_slave_rx);
-            // forward frame to master
-            pio_sm_put_blocking (pio, sm_master_tx, slave_frame.raw);
+        // listen to our master interface for frames from the slave
+        if (!pio_sm_is_rx_fifo_empty (pio, sm_master_rx)) {
+            // receive frame from slave on our 'master' interface
+            slave_frame.raw = pio_sm_get (pio, sm_master_rx);
+            // forward frame to master via our 'slave' interface
+            pio_sm_put_blocking (pio, sm_slave_tx, master_frame.raw);
             // display decoded frame
             printf ("Slave:\t");
             decode_frame (&slave_frame);
+            putchar ('\n');
         }
 
     }
