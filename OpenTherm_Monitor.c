@@ -41,7 +41,7 @@ int main()
     stdio_init_all();
 
     puts ("Starting in...");
-    for (int i=10; i>0; i--) {
+    for (int i=20; i>0; i--) {
         printf ("%d\n", i);
         sleep_ms (1000);
     }
@@ -61,32 +61,36 @@ int main()
         while (true);
     }
 
-    OT_frame_t master_frame, slave_frame;
+    OT_frame_t controller_command, boiler_response;
     puts("Entering main loop");
     while (true) {
 
-        // listen to our 'slave' interface for frames from the master
+        // listen to our 'slave' interface for commands from the controller
         if (!pio_sm_is_rx_fifo_empty (pio, sm_slave_rx)) {
-            // receive frame from master
-            master_frame.raw = pio_sm_get (pio, sm_slave_rx);
-            // forward frame to slave via our 'master' interface
-            pio_sm_put_blocking (pio, sm_master_tx, master_frame.raw);
+            // receive command from controller on our 'slave' interface
+            controller_command.raw = pio_sm_get (pio, sm_slave_rx);
             // display decoded frame
-            printf ("Master:\t");
-            decode_frame (&master_frame);
+            printf ("Controller:\t");
+            display_frame (&controller_command);
+            putchar ('\t');
+            decode_frame (&controller_command);
             putchar ('\n');
+            // forward command to boiler via our 'master' interface
+            pio_sm_put_blocking (pio, sm_master_tx, controller_command.raw);
         }
 
-        // listen to our master interface for frames from the slave
+        // listen to our 'master' interface for responses from the boiler 
         if (!pio_sm_is_rx_fifo_empty (pio, sm_master_rx)) {
-            // receive frame from slave on our 'master' interface
-            slave_frame.raw = pio_sm_get (pio, sm_master_rx);
-            // forward frame to master via our 'slave' interface
-            pio_sm_put_blocking (pio, sm_slave_tx, slave_frame.raw);
+            // receive response from boiler on our 'master' interface
+            boiler_response.raw = pio_sm_get (pio, sm_master_rx);
             // display decoded frame
-            printf ("Slave:\t");
-            decode_frame (&slave_frame);
+            printf ("Boiler:    \t");
+            display_frame (&boiler_response);
+            putchar ('\t');
+            decode_frame (&boiler_response);
             putchar ('\n');
+            // forward response to controller via our 'slave' interface
+            pio_sm_put_blocking (pio, sm_slave_tx, boiler_response.raw);
         }
 
     }
