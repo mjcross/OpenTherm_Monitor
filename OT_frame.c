@@ -39,15 +39,31 @@ void display_frame (OT_frame_t *p_frame) {
 void decode_frame (OT_frame_t *p_frame) {
     switch (p_frame->msg_type) {
         case READ_DATA:
+            printf ("read     ");
+            break;
         case READ_ACK:
-            printf ("read");
+            printf ("read ACK ");
             break;
         case WRITE_DATA:
+            printf ("write    ");
+            break;
         case WRITE_ACK:
-            printf ("write");
+            printf ("write ACK");
+            break;
+        case INVALID_DATA:
+            printf ("Ivld Data");
+            break;
+        case DATA_INVALID:
+            printf ("Data Ivld");
+            break;
+        case UNKNOWN_DATAID:
+            printf ("Unk DatID");
+            break;
+        case RESERVED:
+            printf ("RESERVED ");
             break;
         default:
-            printf ("?");
+            printf ("unknown  ");
             break;
     }
 

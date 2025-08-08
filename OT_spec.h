@@ -12,6 +12,7 @@ typedef enum {
     READ_DATA =     0b000,
     WRITE_DATA =    0b001,
     INVALID_DATA =  0b010,
+    RESERVED =      0b011,
     // slave-to-master messages
     READ_ACK =      0b100,
     WRITE_ACK =     0b101,
