@@ -40,8 +40,9 @@ int main()
 {
     stdio_init_all();
 
+    // startup delay to allow serial port connection
     puts ("Starting in...");
-    for (int i=20; i>0; i--) {
+    for (int i=10; i>0; i--) {
         printf ("%d\n", i);
         sleep_ms (1000);
     }
@@ -62,6 +63,8 @@ int main()
     }
 
     OT_frame_t controller_command, boiler_response;
+    int idle_counter = 0;
+    int idle_threshold = 50;
     puts("Entering main loop");
     while (true) {
 
@@ -77,6 +80,8 @@ int main()
             putchar ('\n');
             // forward command to boiler via our 'master' interface
             pio_sm_put_blocking (pio, sm_master_tx, controller_command.raw);
+            // reset inactivity timer
+            idle_counter = 0;
         }
 
         // listen to our 'master' interface for responses from the boiler 
@@ -91,6 +96,16 @@ int main()
             putchar ('\n');
             // forward response to controller via our 'slave' interface
             pio_sm_put_blocking (pio, sm_slave_tx, boiler_response.raw);
+            // reset inactivity timer
+            idle_counter = 0;
+        }
+
+        // check for inactivity
+        sleep_ms (100);
+        idle_counter += 1;
+        if (idle_counter > idle_threshold) {
+            puts ("idle");
+            idle_counter = 0;
         }
 
     }
