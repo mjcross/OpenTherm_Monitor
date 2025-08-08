@@ -46,8 +46,8 @@ int main()
     if ( 
         OT_tx_init (pio, &sm_master_tx, gpio_master_tx, false) &&
         OT_rx_init (pio, &sm_master_rx, gpio_master_rx, false) &&
-        OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true) &&    // inverse logic
-        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  true)       // inverse logic
+        OT_tx_init (pio, &sm_slave_tx,  gpio_slave_tx,  true) &&
+        OT_rx_init (pio, &sm_slave_rx,  gpio_slave_rx,  true)
     ) {
         puts ("State machines loaded and running");
     } else {
@@ -57,6 +57,8 @@ int main()
 
     puts("Entering main loop");
     int loop_counter = 0;
+    int ok_count = 0;
+    int error_count = 0;
 
     // create a test frame
     OT_frame_t tx_frame = {}, rx_frame = {};
@@ -71,41 +73,54 @@ int main()
 
         putchar ('\n');
 
-        // check Master -> Slave
-        printf ("Master sent\t");
-        pio_sm_put_blocking (pio, sm_master_tx, tx_frame.raw);
-        display_frame (&tx_frame);
-        putchar ('\n');
-
-        printf ("Slave rcvd\t");
-        rx_frame.raw = pio_sm_get_blocking (pio, sm_slave_rx);
-        display_frame (&rx_frame);
-
-        if (tx_frame.raw == rx_frame.raw) {
-            puts ("\tOK");
-        } else {
-            puts ("\tERROR");
-        }  
-
-        sleep_ms(500);
-
-        // check Slave -> Master
         printf ("Slave sent\t");
         pio_sm_put_blocking (pio, sm_slave_tx, tx_frame.raw);
         display_frame (&tx_frame);
         putchar ('\n');
 
-        printf ("Master rcvd\t");
-        rx_frame.raw = pio_sm_get_blocking (pio, sm_master_rx);
-        display_frame (&rx_frame);
-
-        if (tx_frame.raw == rx_frame.raw) {
-            puts ("\tOK");
-        } else {
-            puts ("\tERROR");
-        }
-        
         sleep_ms(500);
 
+        printf ("Master rcvd\t");
+        while (!pio_sm_is_rx_fifo_empty(pio, sm_master_rx)) {
+            rx_frame.raw = pio_sm_get_blocking (pio, sm_master_rx);
+            display_frame (&rx_frame);
+
+            if (tx_frame.raw == rx_frame.raw) {
+                ok_count += 1;
+            } else {
+                error_count += 1;
+            }  
+        }
+
+        printf ("\tOK %d\tError %d\n", ok_count, error_count);
+
+        sleep_ms(500);
+
+        printf ("Master sent\t");
+        pio_sm_put_blocking (pio, sm_master_tx, tx_frame.raw);
+        display_frame (&tx_frame);
+        putchar ('\n');
+
+        sleep_ms(500);
+
+        printf ("Slave rcvd\t");
+        while (!pio_sm_is_rx_fifo_empty(pio, sm_slave_rx)) {
+            rx_frame.raw = pio_sm_get_blocking (pio, sm_slave_rx);
+            display_frame (&rx_frame);
+
+            if (tx_frame.raw == rx_frame.raw) {
+                ok_count += 1;
+            } else {
+                error_count += 1;
+            }  
+        }
+
+        printf ("\tOK %d\tError %d\n", ok_count, error_count);
+
+       
+
+
+        sleep_ms(500);
+    
     }
 }
