@@ -101,12 +101,14 @@ int main()
         }
 
         // check for inactivity
+        /*
         sleep_ms (100);
         idle_counter += 1;
         if (idle_counter > idle_threshold) {
             puts ("idle");
             idle_counter = 0;
         }
+        */
 
     }
 }

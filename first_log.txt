@@ -6,14 +6,14 @@ Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
-Boiler:         4   3 5021      read Slave Config / Member ID  01010000, 33 
+Boiler:         4   3 5021      read Slave Config / Member ID  01010000, 33     (no DHW, on/off, no cooling, DHW Tank) (33: Viessmann)
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
 Boiler:         4   3 5021      read Slave Config / Member ID  01010000, 33 
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
 Boiler:         4   3 5021      read Slave Config / Member ID  01010000, 33 
 Controller:     0   3 0000      read Slave Config / Member ID  00000000, 0 
 Boiler:         4   3 5021      read Slave Config / Member ID  01010000, 33 
-Controller:     1   2 009c      write Master Config / Member ID  00000000, 156 
+Controller:     1   2 009c      write Master Config / Member ID  00000000, 156 (156: Tado)
 Boiler:         5   2 009c      write Master Config / Member ID  00000000, 156 
 Controller:     0  48 0000      read DHW setpoint upper & lower bounds for adjustment  0, 0 deg C
 Boiler:         4  48 3c1e      read DHW setpoint upper & lower bounds for adjustment  60, 30 deg C
@@ -22,7 +22,7 @@ Boiler:         4  48 3c1e      read DHW setpoint upper & lower bounds for adjus
 Controller:     0  48 0000      read DHW setpoint upper & lower bounds for adjustment  0, 0 deg C
 Boiler:         4  48 3c1e      read DHW setpoint upper & lower bounds for adjustment  60, 30 deg C
 Controller:     0   6 0000      read Remote-parameter flags  00000000, 00000000 
-Boiler:         4   6 0202      read Remote-parameter flags  00000010, 00000010 
+Boiler:         4   6 0202      read Remote-parameter flags  00000010, 00000010     (DHW setpoint disabled/RO, max CH setpoint enabled/RW)
 Controller:     0  15 0000      read Maximum boiler capacity (kW) / Minimum boiler modulation level(%)  0, 0 kW/%
 Boiler:         4  15 190a      read Maximum boiler capacity (kW) / Minimum boiler modulation level(%)  25, 10 kW/%
 Controller:     0  49 0000      read Max CH water setpoint upper & lower bounds for adjustment  0, 0 deg C
@@ -35,10 +35,10 @@ Controller:     0  57 0000      read Max CH water setpoint   0.00 deg C
 Boiler:         4  57 5200      read Max CH water setpoint  82.00 deg C
 Controller:     1  14 0000      write Maximum relative modulation level setting   0.00 %
 Boiler:         5  14 0000      write Maximum relative modulation level setting   0.00 %
+Controller:     0   0 0200      read Master and Slave status  00000010, 00000000    (Master: CH disable, DHW enable)
+Boiler:         4   0 0203      read Master and Slave status  00000010, 00000011    (Slave: fault, CH active, DHW not active, flame off)
 Controller:     0   0 0200      read Master and Slave status  00000010, 00000000 
-Boiler:         4   0 0203      read Master and Slave status  00000010, 00000011 
-Controller:     0   0 0200      read Master and Slave status  00000010, 00000000 
-Boiler:         4   0 0201      read Master and Slave status  00000010, 00000001 
+Boiler:         4   0 0201      read Master and Slave status  00000010, 00000001    (Slave: fault, CH not active, flame off)
 Controller:     0   0 0200      read Master and Slave status  00000010, 00000000 
 Boiler:         4   0 0201      read Master and Slave status  00000010, 00000001 
 Controller:     0   0 0200      read Master and Slave status  00000010, 00000000 
@@ -62,7 +62,7 @@ Boiler:         5   1 1400      write Control setpoint  20.00 deg C
 Controller:     1  14 6400      write Maximum relative modulation level setting  100.00 %
 Boiler:         5  14 6400      write Maximum relative modulation level setting  100.00 %
 Controller:     0   5 0000      read Application-specific fault  00000000, 0 
-Boiler:         4   5 01ff      read Application-specific fault  00000001, 255 
+Boiler:         4   5 01ff      read Application-specific fault  00000001, 255      (Slave: service required, code 255)
 Controller:     0  28 0000      read Return water temperature   0.00 deg C
 Boiler:         7  28 0000      ? Return water temperature   0.00 deg C
 Controller:     0  18 0000      read CH water pressure   0.00 bar
